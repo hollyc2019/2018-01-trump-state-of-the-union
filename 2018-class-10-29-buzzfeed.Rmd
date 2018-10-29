@@ -16,10 +16,10 @@ library(stringr)
 library(lubridate)
 library(tidyr)
 library(ggplot2)
-library(tidytext)
 ```
 
 ```{r}
+
 # load data
 sou <- read_csv("data/sou.csv")
 presidents <- read_csv("data/presidents.csv")
@@ -27,6 +27,10 @@ presidents <- read_csv("data/presidents.csv")
 sou <- sou %>%
   left_join(presidents)
 ```
+```{r setup, message=FALSE}
+library(tidytext)
+```
+
 ```{r}
 # load lexicon from https://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html
 bing <- get_sentiments("bing")
@@ -65,5 +69,3 @@ ggplot(positive_freqs, aes(x=date, y=percent, color=party, size = words)) +
         legend.text = element_text(color="#909090", size = 18),
         panel.grid.minor = element_blank())
 ```
-```
- 
