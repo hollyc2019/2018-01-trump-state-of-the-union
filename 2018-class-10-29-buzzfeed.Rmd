@@ -1,0 +1,69 @@
+---
+title: "2018-class-10-29-buzzfeed"
+author: "Holly Christensen"
+date: "October 29, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+opts_chunk$set(out.width="900px", dpi=300)
+# load required packages
+library(readr)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(tidytext)
+```
+
+```{r}
+# load data
+sou <- read_csv("data/sou.csv")
+presidents <- read_csv("data/presidents.csv")
+
+sou <- sou %>%
+  left_join(presidents)
+```
+```{r}
+# load lexicon from https://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html
+bing <- get_sentiments("bing")
+
+# sentiment by address
+sentiments <- sou %>%
+  unnest_tokens(word, text) %>%
+  filter(str_detect(word, "[a-z]")) %>%
+  # match to lexicon
+  inner_join(bing, by = "word")
+
+sentiments_counts <- sentiments %>%
+  group_by(president,party,date,words) %>%
+  count(sentiment) %>%
+  arrange(-n)
+
+positive_freqs <- sentiments_counts %>%
+  left_join(sentiments_counts %>% 
+              group_by(president,party,date,words) %>% 
+              summarise(total = sum(n))) %>%
+  mutate(percent = round(n/total*100,2)) %>%
+  filter(sentiment == "positive")
+
+# sentiment chart
+ggplot(positive_freqs, aes(x=date, y=percent, color=party, size = words)) +
+  geom_point(alpha=0.5) +
+  geom_smooth(se=F, color="black", method="lm", size=0.5, linetype = "dotted") +
+  scale_size_area(max_size = 10, guide = FALSE) +
+  scale_color_manual(values = party_pal, name = "", breaks = c("Democratic","Republican","Whig","Democratic-Republican","Federalist","None")) +
+  scale_y_continuous(limits = c(20,90)) +
+  theme_minimal(base_size = 24, base_family = "ProximaNova-Semibold") +
+  xlab("") +
+  ylab("% positive words") +
+  guides(col = guide_legend(ncol = 2, override.aes = list(size = 4))) +
+  theme(legend.position=c(0.7,0.2),
+        legend.text = element_text(color="#909090", size = 18),
+        panel.grid.minor = element_blank())
+```
+```
+ 
